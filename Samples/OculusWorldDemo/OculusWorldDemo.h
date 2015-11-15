@@ -102,6 +102,10 @@ public:
     virtual void OnMouseMove(int x, int y, int modifiers);
     virtual void OnKey(OVR::KeyCode key, int chr, bool down, int modifiers);
     virtual void OnResize(int width, int height);
+    
+    // FPV functions
+    virtual void GrabFrame();
+    void AdjustPS(float dt);
 
     bool         SetupWindowAndRendering(int argc, const char** argv);
     
@@ -160,6 +164,11 @@ protected:
     bool                SupportsSrgb;
     bool                SupportsMultisampling;
     
+    // FPV
+    CvCapture* capture;
+    IplImage * lastFrame;
+    float pictureSize;
+    
     struct RenderTarget
     {
         Ptr<Texture>     pColorTex;
@@ -207,15 +216,6 @@ protected:
     String	                    MainFilePath;
     Array<Ptr<CollisionModel> > CollisionModels;
     Array<Ptr<CollisionModel> > GroundCollisionModels;
-
-    // Loading process displays screenshot in first frame
-    // and then proceeds to load until finished.
-    enum LoadingStateType
-    {
-        LoadingState_Frame0,
-        LoadingState_DoLoad,
-        LoadingState_Finished
-    } LoadingState;
 
     // Current status flags so that edges can be reported
     bool                HaveVisionTracking;

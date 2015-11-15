@@ -66,7 +66,6 @@ OculusWorldDemoApp::OculusWorldDemoApp() :
     CollisionModels(),
     GroundCollisionModels(),
 
-    LoadingState(LoadingState_Frame0),
     HaveVisionTracking(false),
     HavePositionTracker(false),
     HaveHMDConnected(false),
@@ -159,6 +158,9 @@ OculusWorldDemoApp::OculusWorldDemoApp() :
     ViewFromWorld[1].SetIdentity();
 
     // EyeRenderDesc[], EyeTexture[] : Initialized in CalculateHmdValues()
+    
+    
+    pictureSize = 1.0;
 }
 
 OculusWorldDemoApp::~OculusWorldDemoApp()
@@ -193,26 +195,17 @@ int OculusWorldDemoApp::OnStartup(int argc, const char** argv)
     // Sensor object is created from the HMD, to ensure that it is on the
     // correct device.
 
-    #if defined(OVR_OS_WIN32)
-        OVR::Thread::SetCurrentPriority(Thread::HighestPriority);
-    
-        if(OVR::Thread::GetCPUCount() >= 4) // Don't do this unless there are at least 4 processors, otherwise the process could hog the machine.
-        {
-            SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
-        }
-    #endif
-
     // Example use of ovr_Initialize() to specify a log callback.
     // The log callback can be called from other threads until ovr_Shutdown() completes.
     ovrInitParams params = {0, 0, nullptr, 0};
     params.LogCallback = LogCallback;
     ovrBool result = ovr_Initialize(&params);
 
-    ovr_TraceMessage(ovrLogLevel_Info, "Oculus World Demo OnStartup");
+    ovr_TraceMessage(ovrLogLevel_Info, "Oculus FPV OnStartup");
 
     if (!result)
     {
-        OVR::Util::DisplayMessageBox("OculusWorldDemo", "Unable to initialize LibOVR");
+        OVR::Util::DisplayMessageBox("OculusFPV", "Unable to initialize LibOVR");
         return 1;
     }
 
@@ -291,7 +284,6 @@ int OculusWorldDemoApp::OnStartup(int argc, const char** argv)
     return 0;
 }
 
-
 bool OculusWorldDemoApp::SetupWindowAndRendering(int argc, const char** argv)
 {
     // *** Window creation
@@ -308,11 +300,7 @@ bool OculusWorldDemoApp::SetupWindowAndRendering(int argc, const char** argv)
 
     // *** Initialize Rendering
 
-#if defined(OVR_OS_MS)
-    const char* graphics = "d3d11";  //Default to DX11. Can be overridden below.
-#else
     const char* graphics = "GL";
-#endif
 
     // Select renderer based on command line arguments.
     // Example usage: App.exe -r d3d9 -fs
@@ -360,17 +348,9 @@ bool OculusWorldDemoApp::SetupWindowAndRendering(int argc, const char** argv)
     // Setup RenderParams.RenderAPIType
     if (OVR_stricmp(graphics, "GL") == 0)
         RenderParams.RenderAPIType = ovrRenderAPI_OpenGL;
-    #if defined(OVR_OS_MS)
-        else if (OVR_stricmp(graphics, "d3d9") == 0)
-            RenderParams.RenderAPIType = ovrRenderAPI_D3D9;
-        else if (OVR_stricmp(graphics, "d3d10") == 0)
-            RenderParams.RenderAPIType = ovrRenderAPI_D3D10;
-        else if (OVR_stricmp(graphics, "d3d11") == 0)
-            RenderParams.RenderAPIType = ovrRenderAPI_D3D11;
-    #endif
 
     StringBuffer title;
-    title.AppendFormat("Oculus World Demo %s : %s", graphics, Hmd->ProductName[0] ? Hmd->ProductName : "<unknown device>");
+    title.AppendFormat("Oculus FPV %s : %s", graphics, Hmd->ProductName[0] ? Hmd->ProductName : "<unknown device>");
     pPlatform->SetWindowTitle(title);
 
     if ((RenderParams.RenderAPIType == ovrRenderAPI_OpenGL) && !(Hmd->HmdCaps & ovrHmdCap_ExtendDesktop))
@@ -415,8 +395,6 @@ static String FormatMaxFromSideTan(OptionVar* var)
     OVR_sprintf(buff, sizeof(buff), "%.1f Degrees", degrees);
     return String(buff);
 }
-
-
 
 void OculusWorldDemoApp::PopulateOptionMenu()
 {
@@ -522,12 +500,6 @@ void OculusWorldDemoApp::PopulateOptionMenu()
     Menu.AddFloat("Timewarp.RenderIntervalSeconds", &TimewarpRenderIntervalInSeconds,   
                                                     0.0001f, 1.00f, 0.0001f, "%.1f", 1.0f, &FormatTimewarp).
                                                     AddShortcutUpKey(Key_J).AddShortcutDownKey(Key_U);
-
-#if defined(OVR_OS_WIN32) || defined(OVR_OS_WIN64)
-    Menu.AddBool( "Timewarp.ComputeShaderEnabled",  &ComputeShaderEnabled).
-    												SetNotify(this, &OWD::HmdSettingChange);
-#endif
-    
     
     // First page properties
     Menu.AddBool("VSync 'V'",           &VsyncEnabled)          .AddShortcutKey(Key_V).SetNotify(this, &OWD::HmdSettingChange);
@@ -717,11 +689,6 @@ void OculusWorldDemoApp::CalculateHmdValues()
         distortionCaps |= ovrDistortionCap_LinuxDevFullscreen;
 #endif
 
-#if defined(OVR_OS_WIN32) || defined(OVR_OS_WIN64)
-    if(ComputeShaderEnabled)
-        distortionCaps |= ovrDistortionCap_ComputeShader;
-#endif
-
     if (!ovrHmd_ConfigureRendering( Hmd, &config, distortionCaps, eyeFov, EyeRenderDesc ))
     {
         // Fail exit? TBD
@@ -764,8 +731,6 @@ void OculusWorldDemoApp::CalculateHmdValues()
     // all done
     HmdSettingsChanged = false;
 }
-
-
 
 // Returns the actual size present.
 Sizei OculusWorldDemoApp::EnsureRendertargetAtLeastThisBig(int rtNum, Sizei requestedSize)
@@ -853,7 +818,6 @@ Sizei OculusWorldDemoApp::EnsureRendertargetAtLeastThisBig(int rtNum, Sizei requ
 
     return newRTSize;
 }
-
 
 //-----------------------------------------------------------------------------
 // ***** Message Handlers
@@ -970,7 +934,6 @@ void OculusWorldDemoApp::OnIdle()
     // If running slower than 10fps, clamp. Helps when debugging, because then dt can be minutes!
     LastUpdate     = curtime;    
 
-
     Profiler.RecordSample(RenderProfiler::Sample_FrameStart);
 
     if (HmdSettingsChanged)
@@ -989,9 +952,7 @@ void OculusWorldDemoApp::OnIdle()
         NotificationTimeout = 0.0;
     }
 
-
     HmdFrameTiming = ovrHmd_BeginFrame(Hmd, 0);
-
 
     // Update gamepad.
     GamepadState gamepadState;
@@ -1033,38 +994,7 @@ void OculusWorldDemoApp::OnIdle()
     UpdateFrameRateCounter(curtime);
 
     // Record after processing time.
-    Profiler.RecordSample(RenderProfiler::Sample_AfterGameProcessing);    
-
-    // This scene is so simple, it really doesn't stress the GPU or CPU out like a real game would.
-    // So to simulate a more complex scene, each eye buffer can get rendered lots and lots of times.
-    
-    int totalSceneRenderCount;
-    switch ( SceneRenderCountType )
-    {
-    case SceneRenderCount_FixedLow:
-        totalSceneRenderCount = SceneRenderCountLow;
-        break;
-    case SceneRenderCount_SineTenSec: {
-        float phase = (float)( fmod ( ovr_GetTimeInSeconds() * 0.1, 1.0 ) );
-        totalSceneRenderCount = (int)( 0.49f + SceneRenderCountLow + ( SceneRenderCountHigh - SceneRenderCountLow ) * 0.5f * ( 1.0f + sinf ( phase * 2.0f * MATH_FLOAT_PI ) ) );
-                                        } break;
-    case SceneRenderCount_SquareTenSec: {
-        float phase = (float)( fmod ( ovr_GetTimeInSeconds() * 0.1, 1.0 ) );
-        totalSceneRenderCount = ( phase > 0.5f ) ? SceneRenderCountLow : SceneRenderCountHigh;
-                                        } break;
-    case SceneRenderCount_Spikes: {
-        static int notRandom = 634785346;
-        notRandom *= 543585;
-        notRandom += 782353;
-        notRandom ^= notRandom >> 17;
-        // 0x1311 has 5 bits set = one frame in 32 on average. Simlates texture loading or other real-world mess.
-        totalSceneRenderCount = ( ( notRandom & 0x1311 ) == 0 ) ? SceneRenderCountHigh : SceneRenderCountLow;
-                                    } break;
-    default:
-         OVR_ASSERT ( false );
-         totalSceneRenderCount = SceneRenderCountLow;
-         break;
-    }
+    Profiler.RecordSample(RenderProfiler::Sample_AfterGameProcessing);
 
     // Determine if we are rendering this frame. Frame rendering may be
     // skipped based on FreezeEyeUpdate and Time-warp timing state.
@@ -1074,32 +1004,11 @@ void OculusWorldDemoApp::OnIdle()
     {
         // If render texture size is changing, apply dynamic changes to viewport.
         ApplyDynamicResolutionScaling();
-
         pRender->BeginScene(PostProcess_None);
-
+    
         // Pass in the mideye-to-real-eye vectors we get from the user's profile.
         ovrVector3f hmdToEyeViewOffset[2] = { EyeRenderDesc[0].HmdToEyeViewOffset, EyeRenderDesc[1].HmdToEyeViewOffset };
         float localPositionTrackingScale = PositionTrackingScale;
-
-        // Monoscopic rendering can do two things:
-        //  1) Sets eye HmdToEyeViewOffset values to 0.0 (effective IPD == 0), but retains head-tracking at its original scale.
-        //  2) Sets the player scale to zero, which effectively sets both IPD and head-tracking to 0.
-        switch ( MonoscopicRenderMode )
-        {
-        case Mono_Off:
-            break;
-        case Mono_ZeroIpd:
-        {
-            Vector3f centerEyeOffset = ( (Vector3f)EyeRenderDesc[0].HmdToEyeViewOffset + (Vector3f)EyeRenderDesc[1].HmdToEyeViewOffset ) * 0.5f;
-            hmdToEyeViewOffset[0] = centerEyeOffset; 
-            hmdToEyeViewOffset[1] = centerEyeOffset; 
-        }
-            break;
-        case Mono_ZeroPlayerScale:
-            localPositionTrackingScale = 0.0f;
-            break;
-        default: OVR_ASSERT ( false ); break;
-        }
 
         ovrTrackingState hmdState;
         ovrHmd_GetEyePoses(Hmd, 0, hmdToEyeViewOffset, EyeRenderPose, &hmdState);
@@ -1108,67 +1017,19 @@ void OculusWorldDemoApp::OnIdle()
         EyeRenderPose[0].Position = ((Vector3f)EyeRenderPose[0].Position) * localPositionTrackingScale;
         EyeRenderPose[1].Position = ((Vector3f)EyeRenderPose[1].Position) * localPositionTrackingScale;
 
-        for ( int curSceneRenderCount = 0; curSceneRenderCount < totalSceneRenderCount; curSceneRenderCount++ )
-        {
-            if (MonoscopicRenderMode != Mono_Off)
-            {             
-                // Zero IPD eye rendering: draw into left eye only,
-                // re-use  texture for right eye.
-                pRender->SetRenderTarget(DrawEyeTargets[Rendertarget_Left].pColorTex, DrawEyeTargets[Rendertarget_Left].pDepthTex);
-                pRender->Clear(0.0f, 0.0f, 0.0f, 1.0f, (DepthModifier == NearLessThanFar ? 1.0f : 0.0f));
-
-                RenderEyeView(ovrEye_Left);
-                // Note: Second eye gets texture is (initialized to same value above).
-            }
-            else if (RendertargetIsSharedByBothEyes)
-            {
-                // Shared render target eye rendering; set up RT once for both eyes.
-                pRender->SetRenderTarget(DrawEyeTargets[Rendertarget_BothEyes].pColorTex, DrawEyeTargets[Rendertarget_BothEyes].pDepthTex);
-                pRender->Clear(0.0f, 0.0f, 0.0f, 1.0f, (DepthModifier == NearLessThanFar ? 1.0f : 0.0f));
-
-                for (int eyeIndex = 0; eyeIndex < ovrEye_Count; eyeIndex++)
-                {
-                    ovrEyeType eye = Hmd->EyeRenderOrder[eyeIndex];
-                    RenderEyeView(eye);
-                }
-            }
-            else
-            {
-                // Separate eye rendering - each eye gets its own render target.
-                for (int eyeIndex = 0; eyeIndex < ovrEye_Count; eyeIndex++)
-                {      
-                    ovrEyeType eye = Hmd->EyeRenderOrder[eyeIndex];
-                    pRender->SetRenderTarget(
-                        DrawEyeTargets[(eye == 0) ? Rendertarget_Left : Rendertarget_Right].pColorTex,
-                        DrawEyeTargets[(eye == 0) ? Rendertarget_Left : Rendertarget_Right].pDepthTex);
-                    pRender->Clear(0.0f, 0.0f, 0.0f, 1.0f, (DepthModifier == NearLessThanFar ? 1.0f : 0.0f));
-
-                    RenderEyeView(eye);
-                }
-            }
+        for (int curSceneRenderCount = 0; curSceneRenderCount < SceneRenderCountLow; curSceneRenderCount++) {
+            pRender->SetRenderTarget(DrawEyeTargets[Rendertarget_Left].pColorTex, DrawEyeTargets[Rendertarget_Left].pDepthTex);
+            pRender->Clear(0.0f, 0.0f, 0.0f, 1.0f, (DepthModifier == NearLessThanFar ? 1.0f : 0.0f));
+            RenderEyeView(ovrEye_Left);
+            
+            pRender->SetRenderTarget(DrawEyeTargets[Rendertarget_Right].pColorTex, DrawEyeTargets[Rendertarget_Right].pDepthTex);
+            pRender->Clear(0.0f, 0.0f, 0.0f, 1.0f, (DepthModifier == NearLessThanFar ? 1.0f : 0.0f));
+            RenderEyeView(ovrEye_Right);
         }
 
         pRender->SetDefaultRenderTarget();
-        pRender->FinishScene();        
-
-        if(MultisampleEnabled && SupportsMultisampling)
-        {
-            if (MonoscopicRenderMode != Mono_Off)
-            {
-                pRender->ResolveMsaa(MsaaRenderTargets[Rendertarget_Left].pColorTex, RenderTargets[Rendertarget_Left].pColorTex);
-            }
-            else if (RendertargetIsSharedByBothEyes)
-            {
-                pRender->ResolveMsaa(MsaaRenderTargets[Rendertarget_BothEyes].pColorTex, RenderTargets[Rendertarget_BothEyes].pColorTex);
-            }
-            else
-            {
-                for (int eyeIndex = 0; eyeIndex < ovrEye_Count; eyeIndex++)
-                {
-                    pRender->ResolveMsaa(MsaaRenderTargets[eyeIndex].pColorTex, RenderTargets[eyeIndex].pColorTex);
-                }
-            }
-        }
+        pRender->FinishScene();
+        pRender->Present(true);
     }
         
     Profiler.RecordSample(RenderProfiler::Sample_AfterEyeRender);
@@ -1181,49 +1042,29 @@ void OculusWorldDemoApp::OnIdle()
     Profiler.RecordSample(RenderProfiler::Sample_AfterPresent);    
 }
 
-
-
 // Determine whether this frame needs rendering based on time-warp timing and flags.
-bool OculusWorldDemoApp::FrameNeedsRendering(double curtime)
-{    
+bool OculusWorldDemoApp::FrameNeedsRendering(double curtime) {
     static double   lastUpdate          = 0.0;    
     double          renderInterval      = TimewarpRenderIntervalInSeconds;
     double          timeSinceLast       = curtime - lastUpdate;
     bool            updateRenderedView  = true;
 
-    if (FreezeEyeUpdate)
-    {
-        // Draw one frame after (FreezeEyeUpdate = true) to update message text.            
-        if (FreezeEyeOneFrameRendered)
-            updateRenderedView = false;
-        else
-            FreezeEyeOneFrameRendered = true;
-    }
-    else
-    {
-        FreezeEyeOneFrameRendered = false;
+    FreezeEyeOneFrameRendered = false;
 
-        if ( (timeSinceLast < 0.0) || ((float)timeSinceLast > renderInterval) )
-        {
-            // This allows us to do "fractional" speeds, e.g. 45fps rendering on a 60fps display.
-            lastUpdate += renderInterval;
-            if ( timeSinceLast > 5.0 )
-            {
-                // renderInterval is probably tiny (i.e. "as fast as possible")
-                lastUpdate = curtime;
-            }
+    if ( (timeSinceLast < 0.0) || ((float)timeSinceLast > renderInterval) ) {
+        // This allows us to do "fractional" speeds, e.g. 45fps rendering on a 60fps display.
+        lastUpdate += renderInterval;
+        if (timeSinceLast > 5.0) {
+            // renderInterval is probably tiny (i.e. "as fast as possible")
+            lastUpdate = curtime;
+        }
 
-            updateRenderedView = true;
-        }
-        else
-        {
-            updateRenderedView = false;
-        }
+        updateRenderedView = true;
     }
+    else updateRenderedView = false;
         
     return updateRenderedView;
 }
-
 
 void OculusWorldDemoApp::ApplyDynamicResolutionScaling()
 {
@@ -1277,7 +1118,6 @@ void OculusWorldDemoApp::ApplyDynamicResolutionScaling()
                                                      int(sizeRight.h * dynamicRezScale));
 }
 
-
 void OculusWorldDemoApp::UpdateFrameRateCounter(double curtime)
 {
     FrameCounter++;
@@ -1293,8 +1133,27 @@ void OculusWorldDemoApp::UpdateFrameRateCounter(double curtime)
     }
 }
 
+void OculusWorldDemoApp::GrabFrame() {
+    // if not capturing init the capture!
+    if (!capture) {
+        capture = cvCaptureFromCAM(CV_CAP_ANY);
+        if (!capture) {
+            fprintf( stderr, "ERROR: capture is NULL \n" );
+            getchar();
+        }
+    }
+    
+    lastFrame = cvQueryFrame(capture);
+    if (!lastFrame) {
+        fprintf(stderr, "ERROR: frame is null...\n");
+    }
+}
+
 void OculusWorldDemoApp::RenderEyeView(ovrEyeType eye)
 {
+    if (eye == ovrEye_Left) {
+        GrabFrame();
+    }
     Recti    renderViewport = EyeTexture[eye].Header.RenderViewport;
 
     // *** 3D - Configures Viewport/Projection and Render
@@ -1303,7 +1162,9 @@ void OculusWorldDemoApp::RenderEyeView(ovrEyeType eye)
     pRender->SetDepthMode(true, true, (DepthModifier == NearLessThanFar ?
                                        RenderDevice::Compare_Less :
                                        RenderDevice::Compare_Greater));
-
+    
+    MainScene.Render(pRender, ViewFromWorld[eye]);
+    
     // *** 2D Text - Configure Orthographic rendering.
 
     // Render UI in 2D orthographic coordinate system that maps [-1,1] range
@@ -1314,26 +1175,31 @@ void OculusWorldDemoApp::RenderEyeView(ovrEyeType eye)
     // We set this scale up in CreateOrthoSubProjection().
     float textHeight = 22.0f;
 
-    // Display Loading screen-shot in frame 0.
-    if (LoadingState != LoadingState_Finished)
-    {
-        const float scale = textHeight * 25.0f;
-        Matrix4f view ( scale, 0.0f, 0.0f, 0.0f, scale, 0.0f, 0.0f, 0.0f, scale );
-        LoadingScene.Render(pRender, view);
-        String loadMessage = String("Loading ") + MainFilePath;
-        DrawTextBox(pRender, 0.0f, -textHeight, textHeight, loadMessage.ToCStr(), DrawText_HCenter);
-        LoadingState = LoadingState_DoLoad;
+    char* imageData = (char*) malloc(lastFrame->width * lastFrame->height * 4);
+
+    int pointer = 0;
+    int c = 0;
+    while (c < lastFrame->width * lastFrame->height * 3) {
+        imageData[pointer++] = lastFrame->imageData[(c++)+2];
+        imageData[pointer++] = lastFrame->imageData[c++];
+        imageData[pointer++] = lastFrame->imageData[(c++)-2];
+        imageData[pointer++] = 0xFF;
     }
+    Texture* tex = pRender->CreateTexture(Texture_RGBA, lastFrame->width, lastFrame->height, imageData, 1);
+    ShaderFill* image = (ShaderFill*)pRender->CreateTextureFill(tex, false);
+    pRender->RenderImage(-pictureSize, -pictureSize, pictureSize, pictureSize, image, 255);
+
+    image->Release();
+    tex->Release();
+    free(imageData);
 
     // HUD overlay brought up by spacebar.
     RenderTextInfoHud(textHeight);
-
+    
     // Menu brought up by tab
     Menu.SetShortcutChangeMessageEnable ( ShortcutChangeMessageEnable );
     Menu.Render(pRender);
 }
-
-
 
 // NOTE - try to keep these in sync with the PDF docs!
 static const char* HelpText1 =
@@ -1360,7 +1226,6 @@ void FormatLatencyReading(char* buff, size_t size, float val)
 {    
     OVR_sprintf(buff, size, "%4.2fms", val * 1000.0f);    
 }
-
 
 void OculusWorldDemoApp::RenderTextInfoHud(float textHeight)
 {
@@ -1532,7 +1397,6 @@ void OculusWorldDemoApp::ResetHmdPose(OptionVar* /* = 0 */)
     Menu.SetPopupMessage("Sensor Fusion Recenter Pose");
 }
 
-
 //-----------------------------------------------------------------------------
 
 void OculusWorldDemoApp::ProcessDeviceNotificationQueue()
@@ -1667,7 +1531,6 @@ void OculusWorldDemoApp::GamepadStateChanged(const GamepadState& pad)
 
     LastGamepadState = pad;
 }
-
 
 //-------------------------------------------------------------------------------------
 
