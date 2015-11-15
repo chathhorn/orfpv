@@ -7,11 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		13B4BA0E1BF848F5006F8841 /* libopencv_core.2.4.12.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 13B4BA0C1BF848F5006F8841 /* libopencv_core.2.4.12.dylib */; };
+		13B4BA0F1BF848F5006F8841 /* libopencv_video.2.4.12.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 13B4BA0D1BF848F5006F8841 /* libopencv_video.2.4.12.dylib */; };
 		160739C31A3FC87600BC3261 /* tinyxml2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 160739C11A3FC87600BC3261 /* tinyxml2.cpp */; };
-		160739CA1A3FC8CB00BC3261 /* Player.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 160739C61A3FC8CB00BC3261 /* Player.cpp */; };
-		160739CB1A3FC8CB00BC3261 /* OculusWorldDemo_Scene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 160739C71A3FC8CB00BC3261 /* OculusWorldDemo_Scene.cpp */; };
 		160739CC1A3FC8CB00BC3261 /* OculusWorldDemo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 160739C81A3FC8CB00BC3261 /* OculusWorldDemo.cpp */; };
-		160739CE1A3FC90900BC3261 /* Assets in Resources */ = {isa = PBXBuildFile; fileRef = 160739CD1A3FC90900BC3261 /* Assets */; };
 		16073A0A1A3FC97200BC3261 /* Oculus.icns in Resources */ = {isa = PBXBuildFile; fileRef = 160739D11A3FC97200BC3261 /* Oculus.icns */; };
 		16073A0F1A3FC97200BC3261 /* OSX_Gamepad.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 160739DB1A3FC97200BC3261 /* OSX_Gamepad.cpp */; };
 		16073A101A3FC97200BC3261 /* OSX_Platform.mm in Sources */ = {isa = PBXBuildFile; fileRef = 160739DE1A3FC97200BC3261 /* OSX_Platform.mm */; };
@@ -33,14 +32,12 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		13B4BA0C1BF848F5006F8841 /* libopencv_core.2.4.12.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_core.2.4.12.dylib; path = ../../../../../../../../usr/local/Cellar/opencv/2.4.12/lib/libopencv_core.2.4.12.dylib; sourceTree = "<group>"; };
+		13B4BA0D1BF848F5006F8841 /* libopencv_video.2.4.12.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_video.2.4.12.dylib; path = ../../../../../../../../usr/local/Cellar/opencv/2.4.12/lib/libopencv_video.2.4.12.dylib; sourceTree = "<group>"; };
 		160739C11A3FC87600BC3261 /* tinyxml2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tinyxml2.cpp; path = ../../../../3rdParty/TinyXml/tinyxml2.cpp; sourceTree = "<group>"; };
 		160739C21A3FC87600BC3261 /* tinyxml2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tinyxml2.h; path = ../../../../3rdParty/TinyXml/tinyxml2.h; sourceTree = "<group>"; };
-		160739C51A3FC8CB00BC3261 /* Player.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Player.h; path = ../../Player.h; sourceTree = "<group>"; };
-		160739C61A3FC8CB00BC3261 /* Player.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Player.cpp; path = ../../Player.cpp; sourceTree = "<group>"; };
-		160739C71A3FC8CB00BC3261 /* OculusWorldDemo_Scene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OculusWorldDemo_Scene.cpp; path = ../../OculusWorldDemo_Scene.cpp; sourceTree = "<group>"; };
 		160739C81A3FC8CB00BC3261 /* OculusWorldDemo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OculusWorldDemo.cpp; path = ../../OculusWorldDemo.cpp; sourceTree = "<group>"; };
 		160739C91A3FC8CB00BC3261 /* OculusWorldDemo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OculusWorldDemo.h; path = ../../OculusWorldDemo.h; sourceTree = "<group>"; };
-		160739CD1A3FC90900BC3261 /* Assets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Assets; path = ../../Assets; sourceTree = "<group>"; };
 		160739D11A3FC97200BC3261 /* Oculus.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Oculus.icns; sourceTree = "<group>"; };
 		160739D61A3FC97200BC3261 /* Gamepad.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Gamepad.h; sourceTree = "<group>"; };
 		160739DB1A3FC97200BC3261 /* OSX_Gamepad.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OSX_Gamepad.cpp; sourceTree = "<group>"; };
@@ -85,6 +82,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				13B4BA0E1BF848F5006F8841 /* libopencv_core.2.4.12.dylib in Frameworks */,
+				13B4BA0F1BF848F5006F8841 /* libopencv_video.2.4.12.dylib in Frameworks */,
 				707BF3EE1A8EF54700720128 /* LibOVR.framework in Frameworks */,
 				E8E0A57A190860110077EB8E /* IOKit.framework in Frameworks */,
 				E8E0A57819085FE50077EB8E /* OpenGL.framework in Frameworks */,
@@ -166,13 +165,9 @@
 		E8CC57BE1908266300EEEC84 = {
 			isa = PBXGroup;
 			children = (
-				160739C51A3FC8CB00BC3261 /* Player.h */,
-				160739C61A3FC8CB00BC3261 /* Player.cpp */,
-				160739C71A3FC8CB00BC3261 /* OculusWorldDemo_Scene.cpp */,
 				160739C81A3FC8CB00BC3261 /* OculusWorldDemo.cpp */,
 				160739C91A3FC8CB00BC3261 /* OculusWorldDemo.h */,
 				16073A261A3FCBE900BC3261 /* CameraCalibration.json */,
-				160739CD1A3FC90900BC3261 /* Assets */,
 				160739D01A3FC97200BC3261 /* CommonSrc */,
 				160739C41A3FC89C00BC3261 /* TinyXml */,
 				E8CC57D11908266300EEEC84 /* Supporting Files */,
@@ -192,6 +187,8 @@
 		E8CC57C91908266300EEEC84 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				13B4BA0C1BF848F5006F8841 /* libopencv_core.2.4.12.dylib */,
+				13B4BA0D1BF848F5006F8841 /* libopencv_video.2.4.12.dylib */,
 				707BF3ED1A8EF54700720128 /* LibOVR.framework */,
 				E8E0A579190860110077EB8E /* IOKit.framework */,
 				E8E0A57719085FE50077EB8E /* OpenGL.framework */,
@@ -273,7 +270,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				160739CE1A3FC90900BC3261 /* Assets in Resources */,
 				16073A0A1A3FC97200BC3261 /* Oculus.icns in Resources */,
 				16073A271A3FCBE900BC3261 /* CameraCalibration.json in Resources */,
 			);
@@ -295,12 +291,10 @@
 				16073A221A3FC97200BC3261 /* OptionMenu.cpp in Sources */,
 				16073A111A3FC97200BC3261 /* OSX_WavPlayer.cpp in Sources */,
 				16073A1E1A3FC97200BC3261 /* Render_LoadTextureDDS.cpp in Sources */,
-				160739CA1A3FC8CB00BC3261 /* Player.cpp in Sources */,
 				16073A121A3FC97200BC3261 /* Platform.cpp in Sources */,
 				16073A211A3FC97200BC3261 /* Render_XmlSceneLoader.cpp in Sources */,
 				16073A0F1A3FC97200BC3261 /* OSX_Gamepad.cpp in Sources */,
 				16073A101A3FC97200BC3261 /* OSX_Platform.mm in Sources */,
-				160739CB1A3FC8CB00BC3261 /* OculusWorldDemo_Scene.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -392,7 +386,8 @@
 				CONFIGURATION_TEMP_DIR = "$(SRCROOT)/../../Obj/Mac/$CONFIGURATION";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../../../../LibOVR/Lib/Mac/$CONFIGURATION";
-				GCC_ENABLE_CPP_RTTI = NO;
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = OVR_BUILD_DEBUG;
 				GCC_STRICT_ALIASING = NO;
@@ -405,6 +400,7 @@
 					"$(SRCROOT)/../../../../LibOVR/Include/",
 					"$(SRCROOT)/../../../../LibOVRKernel/Src/",
 					"$(SRCROOT)/../../../../3rdParty/TinyXml/",
+					/usr/local/include/,
 				);
 				INFOPLIST_FILE = Info.plist;
 				LD_MAP_FILE_PATH = "$(TARGET_TEMP_DIR)/LinkMap.txt";
@@ -412,6 +408,8 @@
 					"$(inherited)",
 					"$(SRCROOT)/../../../../LibOVR/Lib/Mac/$CONFIGURATION",
 					"$(SRCROOT)/../../../../LibOVRKernel/Lib/Mac/$CONFIGURATION",
+					/usr/local/lib/,
+					/usr/local/Cellar/opencv/2.4.12/lib,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				OBJROOT = "$(SRCROOT)/../../Obj/Mac/$CONFIGURATION";
@@ -435,7 +433,8 @@
 				CONFIGURATION_TEMP_DIR = "$(SRCROOT)/../../Obj/Mac/$CONFIGURATION";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../../../../LibOVR/Lib/Mac/$CONFIGURATION";
-				GCC_ENABLE_CPP_RTTI = NO;
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = "";
 				GCC_STRICT_ALIASING = NO;
@@ -448,6 +447,7 @@
 					"$(SRCROOT)/../../../../LibOVR/Include/",
 					"$(SRCROOT)/../../../../LibOVRKernel/Src/",
 					"$(SRCROOT)/../../../../3rdParty/TinyXml/",
+					/usr/local/include/,
 				);
 				INFOPLIST_FILE = Info.plist;
 				LD_MAP_FILE_PATH = "$(TARGET_TEMP_DIR)/LinkMap.txt";
@@ -455,6 +455,8 @@
 					"$(inherited)",
 					"$(SRCROOT)/../../../../LibOVR/Lib/Mac/$CONFIGURATION",
 					"$(SRCROOT)/../../../../LibOVRKernel/Lib/Mac/$CONFIGURATION",
+					/usr/local/lib/,
+					/usr/local/Cellar/opencv/2.4.12/lib,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				OBJROOT = "$(SRCROOT)/../../Obj/Mac/$CONFIGURATION";

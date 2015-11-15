@@ -76,7 +76,6 @@ OculusWorldDemoApp::OculusWorldDemoApp() :
 
     LastGamepadState(),
 
-    ThePlayer(),
     MainScene(),
     LoadingScene(),
     SmallGreenCube(),
@@ -268,14 +267,8 @@ int OculusWorldDemoApp::OnStartup(int argc, const char** argv)
     
     CalculateHmdValues();
 
-    // Query eye height.
-    ThePlayer.UserEyeHeight = ovrHmd_GetFloat(Hmd, OVR_KEY_EYE_HEIGHT, ThePlayer.UserEyeHeight);
-    ThePlayer.BodyPos.y     = ThePlayer.UserEyeHeight;
     // Center pupil for customization; real game shouldn't need to adjust this.
     CenterPupilDepthMeters  = ovrHmd_GetFloat(Hmd, "CenterPupilDepth", 0.0f);
-
-
-    ThePlayer.bMotionRelativeToBody = false;  // Default to head-steering for DK1
 
     if (UsingDebugHmd)
         Menu.SetPopupMessage("NO HMD DETECTED");
@@ -292,9 +285,6 @@ int OculusWorldDemoApp::OnStartup(int argc, const char** argv)
     PopulateOptionMenu();
 
     // *** Identify Scene File & Prepare for Loading
-
-    InitMainFilePath();  
-    PopulatePreloadScene();
 
     LastUpdate = ovr_GetTimeInSeconds();
 	
@@ -459,7 +449,6 @@ void OculusWorldDemoApp::PopulateOptionMenu()
 
     // Animating blocks    
     Menu.AddEnum("Scene Content.Animated Blocks", &BlocksShowType).
-                 AddShortcutKey(Key_B).SetNotify(this, &OWD::BlockShowChange).
                  AddEnumValue("None",  0).
                  AddEnumValue("Horizontal Circle", 1).
                  AddEnumValue("Vertical Circle",   2).
@@ -541,17 +530,6 @@ void OculusWorldDemoApp::PopulateOptionMenu()
     
     
     // First page properties
-    Menu.AddFloat("Player.Position Tracking Scale", &PositionTrackingScale, 0.00f, 50.0f, 0.05f).
-                                                    SetNotify(this, &OWD::EyeHeightChange);
-    Menu.AddBool("Player.Scale Affects Player Height", &ScaleAffectsEyeHeight).SetNotify(this, &OWD::EyeHeightChange);
-    Menu.AddFloat("Player.User Eye Height",         &ThePlayer.UserEyeHeight, 0.2f, 2.5f, 0.02f,
-                                        "%4.2f m").SetNotify(this, &OWD::EyeHeightChange).
-                                        AddShortcutUpKey(Key_Equal).AddShortcutDownKey(Key_Minus);
-    Menu.AddFloat("Player.Center Pupil Depth",      &CenterPupilDepthMeters, 0.0f, 0.2f, 0.001f,
-                                        "%4.3f m").SetNotify(this, &OWD::CenterPupilDepthChange);
-
-    Menu.AddBool("Body Relative Motion",&ThePlayer.bMotionRelativeToBody).AddShortcutKey(Key_E);    
-    Menu.AddBool("Zero Head Movement",  &ForceZeroHeadMovement) .AddShortcutKey(Key_F7, ShortcutKey::Shift_RequireOn);
     Menu.AddBool("VSync 'V'",           &VsyncEnabled)          .AddShortcutKey(Key_V).SetNotify(this, &OWD::HmdSettingChange);
     Menu.AddTrigger("Recenter HMD pose 'R'").AddShortcutKey(Key_R).SetNotify(this, &OWD::ResetHmdPose);
 
@@ -889,15 +867,6 @@ void OculusWorldDemoApp::OnResize(int width, int height)
 void OculusWorldDemoApp::OnMouseMove(int x, int y, int modifiers)
 {
     OVR_UNUSED(y);
-    if(modifiers & Mod_MouseRelative)
-    {
-        // Get Delta
-        int dx = x;
-
-        // Apply to rotation. Subtract for right body frame rotation,
-        // since yaw rotation is positive CCW when looking down on XZ plane.
-        ThePlayer.BodyYaw   -= (Sensitivity * dx) / 360.0f;
-    }
 }
 
 
@@ -909,10 +878,6 @@ void OculusWorldDemoApp::OnKey(OVR::KeyCode key, int chr, bool down, int modifie
     }
 
     if (Menu.OnKey(key, chr, down, modifiers))
-        return;
-
-    // Handle player movement keys.
-    if (ThePlayer.HandleMoveKey(key, down))
         return;
 
     switch(key)
@@ -979,10 +944,6 @@ void OculusWorldDemoApp::OnKey(OVR::KeyCode key, int chr, bool down, int modifie
 
             static int nextPosition = 0;
             nextPosition = (nextPosition + 1) % (sizeof(Positions)/sizeof(Positions[0]));
-
-            ThePlayer.BodyPos = Vector3f(Positions[nextPosition].x,
-                                         ThePlayer.UserEyeHeight, Positions[nextPosition].z);
-            ThePlayer.BodyYaw = DegreeToRad( Positions[nextPosition].YawDegrees );
         }
         break;
 
@@ -996,13 +957,6 @@ void OculusWorldDemoApp::OnKey(OVR::KeyCode key, int chr, bool down, int modifie
             OVR::CreateException(OVR::kCETAccessViolation);
         break;
 
-    case Key_Num1:
-        ThePlayer.BodyPos = Vector3f(-1.85f, 6.0f, -0.52f);
-        ThePlayer.BodyPos.y += ThePlayer.UserEyeHeight;
-        ThePlayer.BodyYaw = 3.1415f / 2;
-        ThePlayer.HandleMovement(0, &CollisionModels, &GroundCollisionModels, ShiftDown);
-        break;
-
      default:
         break;
     }
@@ -1010,42 +964,14 @@ void OculusWorldDemoApp::OnKey(OVR::KeyCode key, int chr, bool down, int modifie
 
 //-----------------------------------------------------------------------------
 
-
-Matrix4f OculusWorldDemoApp::CalculateViewFromPose(const Posef& pose)
-{
-    Posef worldPose = ThePlayer.VirtualWorldTransformfromRealPose(pose);
-
-    // Rotate and position View Camera
-    Vector3f up      = worldPose.Rotation.Rotate(UpVector);
-    Vector3f forward = worldPose.Rotation.Rotate(ForwardVector);
-
-    // Transform the position of the center eye in the real world (i.e. sitting in your chair)
-    // into the frame of the player's virtual body.
-
-    Vector3f viewPos = ForceZeroHeadMovement ? ThePlayer.BodyPos : worldPose.Translation;
-
-    Matrix4f view = Matrix4f::LookAtRH(viewPos, viewPos + forward, up);
-    return view;
-}
-
-
-
 void OculusWorldDemoApp::OnIdle()
 {
     double curtime = ovr_GetTimeInSeconds();
     // If running slower than 10fps, clamp. Helps when debugging, because then dt can be minutes!
-    float  dt      = Alg::Min<float>(float(curtime - LastUpdate), 0.1f);
     LastUpdate     = curtime;    
 
 
     Profiler.RecordSample(RenderProfiler::Sample_FrameStart);
-
-    if (LoadingState == LoadingState_DoLoad)
-    {
-        PopulateScene(MainFilePath.ToCStr());
-        LoadingState = LoadingState_Finished;
-        return;
-    }
 
     if (HmdSettingsChanged)
     {
@@ -1105,14 +1031,6 @@ void OculusWorldDemoApp::OnIdle()
     ProcessDeviceNotificationQueue();
     // FPS count and timing.
     UpdateFrameRateCounter(curtime);
-
-    
-    // Update pose based on frame!
-    ThePlayer.HeadPose = trackState.HeadPose.ThePose;
-    // Movement/rotation with the gamepad.
-    ThePlayer.BodyYaw -= ThePlayer.GamepadRotate.x * dt;
-        ThePlayer.HandleMovement(dt, &CollisionModels, &GroundCollisionModels, ShiftDown);
-
 
     // Record after processing time.
     Profiler.RecordSample(RenderProfiler::Sample_AfterGameProcessing);    
@@ -1189,9 +1107,6 @@ void OculusWorldDemoApp::OnIdle()
         // Scale by player's virtual head size (usually 1.0, but for special effects we can make the player larger or smaller).
         EyeRenderPose[0].Position = ((Vector3f)EyeRenderPose[0].Position) * localPositionTrackingScale;
         EyeRenderPose[1].Position = ((Vector3f)EyeRenderPose[1].Position) * localPositionTrackingScale;
-
-        ViewFromWorld[0] = CalculateViewFromPose(EyeRenderPose[0]);
-        ViewFromWorld[1] = CalculateViewFromPose(EyeRenderPose[1]);
 
         for ( int curSceneRenderCount = 0; curSceneRenderCount < totalSceneRenderCount; curSceneRenderCount++ )
         {
@@ -1389,42 +1304,6 @@ void OculusWorldDemoApp::RenderEyeView(ovrEyeType eye)
                                        RenderDevice::Compare_Less :
                                        RenderDevice::Compare_Greater));
 
-    Matrix4f baseTranslate = Matrix4f::Translation(ThePlayer.BodyPos);
-    Matrix4f baseYaw       = Matrix4f::RotationY(ThePlayer.BodyYaw.Get());
-
-    if (GridDisplayMode != GridDisplay_GridOnly)
-    {
-        if (SceneMode != Scene_OculusCubes && SceneMode != Scene_DistortTune)
-        {
-            MainScene.Render(pRender, ViewFromWorld[eye]);        
-            RenderAnimatedBlocks(eye, ovr_GetTimeInSeconds());
-        }
-        
-        if (SceneMode == Scene_Cubes)
-        {
-            // Draw scene cubes overlay. Red if position tracked, blue otherwise.
-            if (HmdStatus & ovrStatus_PositionTracked)
-            {
-                RedCubesScene.Render(pRender, ViewFromWorld[eye] * baseTranslate * baseYaw);
-            }
-            else
-            {
-                BlueCubesScene.Render(pRender, ViewFromWorld[eye] * baseTranslate * baseYaw);
-            }
-        }
-
-        else if (SceneMode == Scene_OculusCubes)
-        {
-            OculusCubesScene.Render(pRender, ViewFromWorld[eye] * baseTranslate * baseYaw);
-        }
-    }
-
-    if (GridDisplayMode != GridDisplay_None)
-    {
-        RenderGrid(eye);
-    }
-
-
     // *** 2D Text - Configure Orthographic rendering.
 
     // Render UI in 2D orthographic coordinate system that maps [-1,1] range
@@ -1486,8 +1365,7 @@ void FormatLatencyReading(char* buff, size_t size, float val)
 void OculusWorldDemoApp::RenderTextInfoHud(float textHeight)
 {
     // View port & 2D ortho projection must be set before call.
-    
-    float hmdYaw, hmdPitch, hmdRoll;
+
     switch(TextScreen)
     {
     case Text_Info:
@@ -1539,21 +1417,15 @@ void OculusWorldDemoApp::RenderTextInfoHud(float textHeight)
             }
         }
 
-        ThePlayer.HeadPose.Rotation.GetEulerAngles<Axis_Y, Axis_X, Axis_Z>(&hmdYaw, &hmdPitch, &hmdRoll);
         OVR_sprintf(buf, sizeof(buf),
-                    " HMD YPR:%4.0f %4.0f %4.0f   Player Yaw: %4.0f\n"
                     " FPS: %.1f  ms/frame: %.1f  Frame: %03d %d\n"
-                    " Pos: %3.2f, %3.2f, %3.2f   HMD: %s\n"
-                    " EyeHeight: %3.2f, IPD: %3.1fmm\n" //", Lens: %s\n"
+                    " HMD: %s\n"
+                    " IPD: %3.1fmm\n" //", Lens: %s\n"
                     " FOV %3.1fx%3.1f, Resolution: %ix%i\n"
                     "%s",
-                    RadToDegree(hmdYaw), RadToDegree(hmdPitch), RadToDegree(hmdRoll),
-                    RadToDegree(ThePlayer.BodyYaw.Get()),
                     FPS, SecondsPerFrame * 1000.0f, FrameCounter, TotalFrameCounter % 2,
-                    ThePlayer.BodyPos.x, ThePlayer.BodyPos.y, ThePlayer.BodyPos.z,
                     //GetDebugNameHmdType ( TheHmdRenderInfo.HmdType ),
                     Hmd->ProductName,
-                    ThePlayer.UserEyeHeight,
                     ovrHmd_GetFloat(Hmd, OVR_KEY_IPD, 0) * 1000.0f,
                     //( EyeOffsetFromNoseLeft + EyeOffsetFromNoseRight ) * 1000.0f,
                     //GetDebugNameEyeCupType ( TheHmdRenderInfo.EyeCups ),  // Lens/EyeCup not exposed
@@ -1785,11 +1657,6 @@ void OculusWorldDemoApp::GamepadStateChanged(const GamepadState& pad)
     {   // Dismiss Safety warning with any key.
         ovrHmd_DismissHSWDisplay(Hmd);
     }
-
-    ThePlayer.GamepadMove   = Vector3f(pad.LX * pad.LX * (pad.LX > 0 ? 1 : -1),
-                             0,
-                             pad.LY * pad.LY * (pad.LY > 0 ? -1 : 1));
-    ThePlayer.GamepadRotate = Vector3f(2 * pad.RX, -2 * pad.RY, 0);
 
     uint32_t gamepadDeltas = (pad.Buttons ^ LastGamepadState.Buttons) & pad.Buttons;
 

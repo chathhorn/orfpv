@@ -44,24 +44,12 @@ limitations under the License.
 #include "../CommonSrc/Util/OptionMenu.h"
 #include "../CommonSrc/Util/RenderProfiler.h"
 
-
-#include "Player.h"
-
-// Filename to be loaded by default, searching specified paths.
-#define WORLDDEMO_ASSET_FILE  "Tuscany.xml"
-
-#define WORLDDEMO_ASSET_PATH1 "Assets/Tuscany/"
-#define WORLDDEMO_ASSET_PATH2 "../Assets/Tuscany/"
-#define WORLDDEMO_ASSET_PATH3 "../../Assets/Tuscany/"
-#define WORLDDEMO_ASSET_PATH4 "../../../Assets/Tuscany/"
-#define WORLDDEMO_ASSET_PATH5 "../../../../Assets/Tuscany/"
-#define WORLDDEMO_ASSET_PATH6 "../../../../../Assets/Tuscany/"
-#define WORLDDEMO_ASSET_PATH7 "Samples/OculusWorldDemo/Assets/Tuscany/" // This path allows the shortcut to work.
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
 
 using namespace OVR;
 using namespace OVR::OvrPlatform;
 using namespace OVR::Render;
-
 
 //-------------------------------------------------------------------------------------
 // ***** OculusWorldDemo Description
@@ -118,27 +106,18 @@ public:
     bool         SetupWindowAndRendering(int argc, const char** argv);
     
     // Adds room model to scene.
-    void         InitMainFilePath();
-    void         PopulateScene(const char* fileName);
-    void         PopulatePreloadScene();
     void		 ClearScene();
     void         PopulateOptionMenu();
-
 
     // Computes all of the Hmd values and configures render targets.
     void         CalculateHmdValues();
     // Returns the actual size present.
     Sizei        EnsureRendertargetAtLeastThisBig (int rtNum, Sizei size);
 
-
     // Renders full stereo scene for one eye.
     void         RenderEyeView(ovrEyeType eye);
     // Renderes HUD overlay brough up by spacebar; 2D viewport must be set before call.
     void         RenderTextInfoHud(float textHeight);
-    void         RenderAnimatedBlocks(ovrEyeType eye, double appTime);
-    void         RenderGrid(ovrEyeType eye);
-    
-    Matrix4f     CalculateViewFromPose(const Posef& pose);
 
     // Determine whether this frame needs rendering based on timewarp timing and flags.
     bool        FrameNeedsRendering(double curtime);
@@ -160,13 +139,6 @@ public:
     void HmdSettingChange(OptionVar* = 0)   { HmdSettingsChanged = true; }
     void MirrorSettingChange(OptionVar* = 0)
     { HmdSettingsChanged = true; NotificationTimeout = ovr_GetTimeInSeconds() + 10.0f;}
-    
-    void BlockShowChange(OptionVar* = 0)    { BlocksCenter = ThePlayer.BodyPos; }
-    void EyeHeightChange(OptionVar* = 0)
-    {
-        ThePlayer.HeightScale = ScaleAffectsEyeHeight ? PositionTrackingScale : 1.0f;
-        ThePlayer.BodyPos.y = ThePlayer.GetScaledEyeHeight();
-    }
 
     void HmdSensorToggle(OptionVar* = 0);
     void HmdSettingChangeFreeRTs(OptionVar* = 0);
@@ -256,7 +228,6 @@ protected:
     
     GamepadState        LastGamepadState;
 
-    Player				ThePlayer;
     Matrix4f            ViewFromWorld[2];   // One per eye.
     Scene               MainScene;
     Scene               LoadingScene;
@@ -429,7 +400,5 @@ protected:
     // true if logging tracking data to file
     bool IsVisionLogging;
 };
-
-
 
 #endif // OVR_OculusWorldDemo_h
